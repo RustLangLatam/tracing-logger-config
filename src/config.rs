@@ -10,8 +10,6 @@ pub struct Config {
     #[serde(default)]
     pub rotation: RotationKind,
     pub level: Option<LevelInner>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub exporter_endpoint: Option<ExporterEndpoint>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -49,7 +47,6 @@ impl Default for Config {
             log_path: None,
             rotation: RotationKind::default(),
             level: None,
-            exporter_endpoint: None,
         }
     }
 }
