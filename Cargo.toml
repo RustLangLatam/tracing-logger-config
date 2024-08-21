@@ -1,0 +1,21 @@
+[package]
+name = "tracing-logger-config"
+version = "0.1.0"
+description = "Custom logger config for tracing"
+authors = ["Eleazar Garrido <eleazartovar123@gmail.com>"]
+categories = ["development-tools::debugging", "development-tools::profiling"]
+repository = "https://gitlab.com/proximax-latam/celebrities"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+anyhow = "1.0"
+chrono = "0.4"
+
+tracing = { version = "0.1.40", features = ["log"] }
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json", "chrono"] }
+tracing-opentelemetry = "0.25.0"
+opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.17.0", features = ["grpc-tonic"] }
+opentelemetry = "0.24.0"
