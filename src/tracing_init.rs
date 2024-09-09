@@ -1,6 +1,6 @@
 use opentelemetry::trace::TracerProvider;
 use opentelemetry_otlp::WithExportConfig;
-use std::{env, str::FromStr};
+use std::str::FromStr;
 use tracing_appender::{non_blocking::WorkerGuard, rolling};
 use tracing_subscriber::{fmt,
                          fmt::{format::FmtSpan, time::ChronoLocal, writer::BoxMakeWriter},
@@ -14,10 +14,6 @@ pub fn init_tracing(
     exporter_endpoint: Option<&ExporterEndpoint>,
     config: Option<&Config>,
 ) -> anyhow::Result<WorkerGuard> {
-    unsafe {
-        env::set_var("OTEL_BSP_MAX_EXPORT_BATCH_SIZE", "12");
-    }
-
     let mut env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or(tracing_subscriber::EnvFilter::from("info"));
 
@@ -30,9 +26,7 @@ pub fn init_tracing(
 
         // Log all `tracing` events to files prefixed with `debug`. Since these
         // files will be written to very frequently, roll the log file every hourly.
-        let log_path = c.log_path();
-
-        if let Some(log_path) = log_path {
+        if let Some(log_path) = c.log_path() {
             let log_file = match c.rotation {
                 RotationKind::Never =>
                     rolling::never(log_path.directory.as_str(), log_path.filename.as_str()),
