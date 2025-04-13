@@ -2,12 +2,16 @@ use opentelemetry::trace::TracerProvider;
 use opentelemetry_otlp::WithExportConfig;
 use std::str::FromStr;
 use tracing_appender::{non_blocking::WorkerGuard, rolling};
-use tracing_subscriber::{fmt,
-                         fmt::{format::FmtSpan, time::ChronoLocal, writer::BoxMakeWriter},
-                         prelude::*};
+use tracing_subscriber::{
+    fmt,
+    fmt::{format::FmtSpan, time::ChronoLocal, writer::BoxMakeWriter},
+    prelude::*,
+};
 
-use crate::{config::{Config, LogPath, RotationKind},
-            ExporterEndpoint};
+use crate::{
+    config::{Config, LogPath, RotationKind},
+    ExporterEndpoint,
+};
 
 /// Initializes an OpenTelemetry tracing subscriber with a Jaeger backend.
 pub fn init_tracing(
@@ -28,21 +32,28 @@ pub fn init_tracing(
         // files will be written to very frequently, roll the log file every hourly.
         if let Some(log_path) = c.log_path() {
             let log_file = match c.rotation {
-                RotationKind::Never =>
-                    rolling::never(log_path.directory.as_str(), log_path.filename.as_str()),
-                RotationKind::Minutely =>
-                    rolling::minutely(log_path.directory.as_str(), log_path.filename.as_str()),
-                RotationKind::Hourly =>
-                    rolling::hourly(log_path.directory.as_str(), log_path.filename.as_str()),
-                RotationKind::Daily =>
-                    rolling::daily(log_path.directory.as_str(), log_path.filename.as_str()),
+                RotationKind::Never => {
+                    rolling::never(log_path.directory.as_str(), log_path.filename.as_str())
+                }
+                RotationKind::Minutely => {
+                    rolling::minutely(log_path.directory.as_str(), log_path.filename.as_str())
+                }
+                RotationKind::Hourly => {
+                    rolling::hourly(log_path.directory.as_str(), log_path.filename.as_str())
+                }
+                RotationKind::Daily => {
+                    rolling::daily(log_path.directory.as_str(), log_path.filename.as_str())
+                }
             };
 
             let (log_non_blocking, guard) = tracing_appender::non_blocking(log_file);
 
             let error_log_file = c.log_error_path().unwrap_or({
                 let filename = format!("error_{}", log_path.filename.as_str());
-                LogPath { filename, directory: log_path.directory.clone() }
+                LogPath {
+                    filename,
+                    directory: log_path.directory.clone(),
+                }
             });
 
             let level: tracing::Level = tracing::Level::from_str(env_filter.to_string().as_str())?;
@@ -78,17 +89,20 @@ pub fn init_tracing(
         fmt::layer()
             .with_timer(timer)
             .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+            .compact()
             .with_writer(writer),
     );
 
     if let Some(endpoint) = exporter_endpoint {
-        let otlp_exporter =
-            opentelemetry_otlp::new_exporter().tonic().with_endpoint(endpoint.get_host());
+        let otlp_exporter = opentelemetry_otlp::SpanExporter::builder()
+            .with_tonic()
+            .with_endpoint(endpoint.get_host())
+            .build()?;
 
-        let tracer = opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(otlp_exporter)
-            .install_batch(opentelemetry_sdk::runtime::Tokio)?
+        // Create a tracer provider with the exporter
+        let tracer = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+            .with_batch_exporter(otlp_exporter)
+            .build()
             .tracer("trace_app");
 
         // Create a layer with the configured tracer
