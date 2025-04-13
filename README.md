@@ -15,7 +15,7 @@ To use `tracing_logger_config` in your project, add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tracing_logger_config = "0.1.0"
+tracing_logger_config = "0.1.2"
 ```
 
 ## Usage
